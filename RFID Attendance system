@@ -1,0 +1,50 @@
+#include <SPI.h>
+#include <MFRC522.h>
+#include <Wire.h>
+#include <LiquidCrystal_I2C.h>
+
+MFRC522 rfid(10, 9);
+LiquidCrystal_I2C lcd(0x27, 16, 2);
+
+void setup() {
+  Serial.begin(9600);
+  SPI.begin();
+  rfid.PCD_Init();
+  lcd.init();
+  lcd.backlight();
+  lcd.print("Scan RFID Card");
+}
+
+void loop() {
+  if (!rfid.PICC_IsNewCardPresent() ||
+      !rfid.PICC_ReadCardSerial()) return;
+
+  String uid = "";
+  for (byte i = 0; i < rfid.uid.size; i++) {
+    if (rfid.uid.uidByte[i] < 16) uid += "0";
+    uid += String(rfid.uid.uidByte[i], HEX);
+  }
+  uid.toUpperCase();
+
+  lcd.clear();
+
+  if (uid == "40A60A9061") {
+    lcd.print("G.M. KIRAN");
+    Serial.println("G.M. KIRAN - PRESENT");
+  }
+  else if (uid == "D4E0FAE5") {
+    lcd.print("SANJANA");
+    Serial.println("SANJANA - PRESENT");
+  }
+  else {
+    lcd.print("Unknown Card");
+    Serial.println("Unknown Student");
+  }
+
+  rfid.PICC_HaltA();
+  rfid.PCD_StopCrypto1();
+  delay(2000);
+
+  lcd.clear();
+  lcd.print("Scan RFID Card");
+}
